@@ -1,10 +1,13 @@
-import os, sys, json, unicodecsv
+import os
+import sys
+import json
+import unicodecsv
 import requests
 from urllib import urlencode
 from cli.log import LoggingApp
-from collections import OrderedDict
 
 API_ENDPOINT = u'https://www.readycloud.com/api/v1/'
+
 
 class Struct(object):
 
@@ -82,10 +85,9 @@ class RCClient(object):
             return False
         return True
 
-
     def get_orders(self, dict_order=None):
         """Gets all orders from the api server."""
-        return self.get_resource('order', 'Order', dict_order=dict_order)
+        return self.get_resource('orders', 'Order', dict_order=dict_order)
 
 
 class RCCLI(LoggingApp):
@@ -100,8 +102,7 @@ class RCCLI(LoggingApp):
         if not self.api_endpoint.endswith('/'):
             self.api_endpoint += '/'
 
-        self.redirect_uri = self.params.redirect_uri or\
-                            u'{}oauth2/auth_code'.format(self.api_endpoint)
+        self.redirect_uri = self.params.redirect_uri or u'{}oauth2/auth_code'.format(self.api_endpoint)
 
         self.auth_url = u'{}oauth2/authorize'.format(self.api_endpoint)
 
@@ -118,17 +119,14 @@ class RCCLI(LoggingApp):
             command_call()
 
     def list_orders(self):
-        order_headers = ['id', 'primary_id', 'numerical_id', 'alias_id',
-                         'po_number', 'customer_number', 'source',
-                         'tax', 'tax_source', 'imported_tax',
-                         'calculated_tax', 'shipping', 'shipping_source',
-                         'imported_shipping', 'calculated_shipping', 'actual_shipcost',
-                         'status_shipped', 'ship_type', 'ship_via', 'ship_time', 'future_ship_time',
-                         'total', 'total_source', 'imported_total', 'calculated_total',
-                         'base_price', 'base_price_source', 'imported_base_price',
-                         'calculated_base_price', 'message', 'terms', 'resource_uri',
-                         'created_at', 'updated_at', 'print_time', 'order_time',
-                         'import_time']
+        order_headers = [
+            'bill_to', 'ship_from', 'ship_to',
+            'charges', 'boxes', 'custom_fields',
+            'future_ship_time', 'import_time', 'print_time', 'order_time',
+            'status_shipped', 'ship_type', 'ship_via', 'ship_time',
+            'customer_number', 'message', 'po_number', 'source', 'numerical_id', 'primary_id', 'terms',
+            'resource_uri', 'revisions_resource_uri',
+        ]
 
         self.print_data(self.client.get_orders(order_headers),
                         self.params.display_format)
@@ -161,7 +159,7 @@ class RCCLI(LoggingApp):
                        help='The default api endpoint. Defaults to https://www.readycloud.com/api/v1/')
         self.add_param('-r', '--redirect-uri', default=None, dest='redirect_uri',
                        help='Redirect uri that the client is setup for. Default is "{API_ENDPOINT}/oauth2/auth_code"')
-        self.add_param('-z', '--scope', default='order', dest='scope',
+        self.add_param('-z', '--scope', default='orders', dest='scope',
                        help=('The requested scope of the app. Can be single or space separated. '
                              'ex "xml_backup" or "xml_backup orders"'))
         self.add_param('command', choices=self.commands,
@@ -194,8 +192,7 @@ class RCCLI(LoggingApp):
         if self.params.scope:
             data['scope'] = self.params.scope
 
-        print(u'\nTo authenticate with ReadyCloud and grant {} access to your account,\n'
-                      u'follow this link in a web browser:'.format(__file__))
+        print(u'\nTo authenticate with ReadyCloud and grant {} access to your account,\nfollow this link in a web browser:'.format(__file__))
 
         url = u'{}?{}'.format(self.auth_url, urlencode(data))
 
